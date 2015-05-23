@@ -22,7 +22,8 @@ table td {
 
 		var width = 10; // 全体の横幅(セル数）)
 		var height = 20; // 全体の高さ(セル数）)
-		var moveSpeed = 100; // 画面再描画速度(ミリ秒）)
+		var moveSpeed = 300; // 画面再描画速度(ミリ秒）)
+		var speed = 30;
 
 		var table = [ '<table>' ];
 		for ( var y = 0; y < height; y++) {
@@ -56,8 +57,10 @@ table td {
 
 		}
 
+		var tick = 0;
 		var move = function() {
 
+			tick++;
 			leftBefore = left;
 
 			// 別イベント関数 onkeydownにて記録した情報を受け取る
@@ -80,9 +83,19 @@ table td {
 			cells[top * width + left + 3].style.backgroundColor = 'red';
 
 			topBefore = top;
-			top++;
+
+			// move関数の実行と、１マス下に動く挙動を分離する
+			if (tick % speed ==0) {
+				top++;
+			}
+
+
+			var info = 'プログラム内の経過：'+ tick + '(' + left + ',' + top + ')';
+			document.getElementById('info').innerHTML = info;
+
+
 			if (top < height) {
-				setTimeout(move, moveSpeed);
+				setTimeout(move, moveSpeed / speed);
 			}
 		}
 
@@ -94,7 +107,7 @@ table td {
 </head>
 <body>
 
-
+	<div id ="info"></div>
 	<div id="view"></div>
 
 </body>
