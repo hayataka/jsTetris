@@ -37,10 +37,17 @@ table td {
 		}
 		table.push('</table>');
 
-		var top = 0;
+		var top = 2; //画面に最初に描画されたのが(２７０度変換された状態であっても）画面にテトリス要素がすべて表示されるようにするため)
 		var topBefore = top //「1回前の」状態を保存する系統の変数
-		var left = 0;
+		var left = Math.floor(width / 2); //画面の真ん中に初期配置
 		var leftBefore = left;
+
+		var w = width; //省略記述用。
+		var angles = [ [ -1, 1, 2 ], [ -w, w, w + w ], [ -2, -1, 1 ],
+				[ -w - w, -w, w ] ]; //テトリスブロックをtd配列の位置で表す
+		var angle = 0;
+		var partsBefore = [];
+
 		var keys = {};
 		var cells = document.getElementsByTagName('td');
 
@@ -53,6 +60,14 @@ table td {
 			case 39: // キーボードの右キー
 				keys.right = true;
 				break;
+			case 38: //キーボードの上キー
+				keys.rotate = true;
+				break;
+			/**
+			default:
+				console.log(e.keyCode);
+				break;
+			 **/
 			}
 
 		}
@@ -70,29 +85,33 @@ table td {
 			if (keys.right && left + 4 < width) {
 				left++;
 			}
+
+			if (keys.rotate) {
+				angle++
+			}
+
 			keys = {}; // 初期化（次のイベントで拾えるようにする）
 
-			cells[topBefore * width + leftBefore + 0].style.backgroundColor = '';
-			cells[topBefore * width + leftBefore + 1].style.backgroundColor = '';
-			cells[topBefore * width + leftBefore + 2].style.backgroundColor = '';
-			cells[topBefore * width + leftBefore + 3].style.backgroundColor = '';
+			for ( var i = -1; i < partsBefore.length; i++) {
+				var offset = partsBefore[i] || 0;
+				cells[topBefore * width + leftBefore + offset].style.backgroundColor = '';
+			}
+			partsBefore = angles[angle % angles.length];
 
-			cells[top * width + left + 0].style.backgroundColor = 'red';
-			cells[top * width + left + 1].style.backgroundColor = 'red';
-			cells[top * width + left + 2].style.backgroundColor = 'red';
-			cells[top * width + left + 3].style.backgroundColor = 'red';
+			for ( var i = -1; i < partsBefore.length; i++) {
+				var offset = partsBefore[i] || 0;
+				cells[top * width + left + offset].style.backgroundColor = 'red';
+			}
 
 			topBefore = top;
 
 			// move関数の実行と、１マス下に動く挙動を分離する
-			if (tick % speed ==0) {
+			if (tick % speed == 0) {
 				top++;
 			}
 
-
-			var info = 'プログラム内の経過：'+ tick + '(' + left + ',' + top + ')';
+			var info = 'プログラム内の経過：' + tick + '(' + left + ',' + top + ')';
 			document.getElementById('info').innerHTML = info;
-
 
 			if (top < height) {
 				setTimeout(move, moveSpeed / speed);
@@ -107,7 +126,8 @@ table td {
 </head>
 <body>
 
-	<div id ="info"></div>
+	<div id="explain">キーボードの上、左、右で対応</div>
+	<div id="info"></div>
 	<div id="view"></div>
 
 </body>
