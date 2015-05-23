@@ -18,61 +18,84 @@ table td {
 </style>
 
 <script type="text/javascript">
+	window.onload = function() {
 
-window.onload = function() {
+		var width = 10; // 全体の横幅(セル数）)
+		var height = 20; // 全体の高さ(セル数）)
+		var moveSpeed = 100; // 画面再描画速度(ミリ秒）)
 
-	var width = 10;				// 全体の横幅(セル数）)
-	var height = 20;			// 全体の高さ(セル数）)
-	var moveSpeed = 500;		// 画面再描画速度(ミリ秒）)
+		var table = [ '<table>' ];
+		for ( var y = 0; y < height; y++) {
 
-	var table = ['<table>'];
-	for(var y = 0; y < height; y++) {
+			table.push('<tr>');
 
-		table.push('<tr>');
-
-		for (var x = 0; x< width; x++) {
-			table.push('<td></td>');
+			for ( var x = 0; x < width; x++) {
+				table.push('<td></td>');
+			}
+			table.push('</tr>');
 		}
-		table.push('</tr>');
-	}
+		table.push('</table>');
 
-	table.push('</table>');
+		var top = 0;
+		var topBefore = top //「1回前の」状態を保存する系統の変数
+		var left = 0;
+		var leftBefore = left;
+		var keys = {};
+		var cells = document.getElementsByTagName('td');
 
-	var top = 0;
-	var top0 = top
+		// キーボード入力を受け付ける
+		document.onkeydown = function(e) {
+			switch ((e || event).keyCode) {
+			case 37: // キーボードの左キー
+				keys.left = true;
+				break;
+			case 39: // キーボードの右キー
+				keys.right = true;
+				break;
+			}
 
-	var cells = document.getElementsByTagName('td');
-
-	var move = function() {
-		cells[top0 * width + 0].style.backgroundColor = '';
-		cells[top0 * width + 1].style.backgroundColor = '';
-		cells[top0 * width + 2].style.backgroundColor = '';
-		cells[top0 * width + 3].style.backgroundColor = '';
-
-		cells[top * width + 0].style.backgroundColor = 'red';
-		cells[top * width + 1].style.backgroundColor = 'red';
-		cells[top * width + 2].style.backgroundColor = 'red';
-		cells[top * width + 3].style.backgroundColor = 'red';
-
-		top0 = top;
-		top++;
-		if (top < height) {
-			setTimeout(move, moveSpeed);
 		}
+
+		var move = function() {
+
+			leftBefore = left;
+
+			// 別イベント関数 onkeydownにて記録した情報を受け取る
+			if (keys.left && left > 0) {
+				left--;
+			}
+			if (keys.right && left + 4 < width) {
+				left++;
+			}
+			keys = {}; // 初期化（次のイベントで拾えるようにする）
+
+			cells[topBefore * width + leftBefore + 0].style.backgroundColor = '';
+			cells[topBefore * width + leftBefore + 1].style.backgroundColor = '';
+			cells[topBefore * width + leftBefore + 2].style.backgroundColor = '';
+			cells[topBefore * width + leftBefore + 3].style.backgroundColor = '';
+
+			cells[top * width + left + 0].style.backgroundColor = 'red';
+			cells[top * width + left + 1].style.backgroundColor = 'red';
+			cells[top * width + left + 2].style.backgroundColor = 'red';
+			cells[top * width + left + 3].style.backgroundColor = 'red';
+
+			topBefore = top;
+			top++;
+			if (top < height) {
+				setTimeout(move, moveSpeed);
+			}
+		}
+
+		document.getElementById('view').innerHTML = table.join('');
+		move();
 	}
-
-
-	document.getElementById('view').innerHTML = table.join('');
-	move();
-}
-
 </script>
 
 </head>
 <body>
 
 
-<div id ="view"></div>
+	<div id="view"></div>
 
 </body>
 </html>
