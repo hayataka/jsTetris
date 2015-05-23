@@ -20,10 +20,11 @@ table td {
 <script type="text/javascript">
 	window.onload = function() {
 
-		var width = 10; // 全体の横幅(セル数）)
-		var height = 20; // 全体の高さ(セル数）)
+		var width = 12; // 全体の横幅(セル数）) + あたり判定用+２(左右）)
+		var height = 21; // 全体の高さ(セル数）)+ あたり判定用+１
 		var moveSpeed = 300; // 画面再描画速度(ミリ秒）)
 		var speed = 30;
+		var fills = {};
 
 		var table = [ '<table>' ];
 		for ( var y = 0; y < height; y++) {
@@ -31,7 +32,13 @@ table td {
 			table.push('<tr>');
 
 			for ( var x = 0; x < width; x++) {
-				table.push('<td></td>');
+				if (x==0 || x == width -1 || y==height -1) {
+					table.push('<td style="background-color:silver"></td>');
+					fills[x+y * width] = 'silver';
+				} else {
+					table.push('<td></td>');
+				}
+
 			}
 			table.push('</tr>');
 		}
@@ -43,13 +50,27 @@ table td {
 		var leftBefore = left;
 
 		var w = width; //省略記述用。
-		var angles = [ [ -1, 1, 2 ], [ -w, w, w + w ], [ -2, -1, 1 ],
-				[ -w - w, -w, w ] ]; //テトリスブロックをtd配列の位置で表す
 		var angle = 0;
+		var angleBefore = angle;
 		var partsBefore = [];
+
+
+		var blocks = [ { color: 'cyan'		, angles: [ [-1  ,  1, 2], [-w, w, w +  w], [-2,-1, 1], [-w-w,-w, w] ] },
+		               { color: 'yellow'	, angles: [ [-w-1, -w,-1]                                            ] },
+		               { color: 'green'		, angles: [ [-w  ,1-w,-1],	[-w, 1, w + 1], [1, w-1, w], [-w-1,-1, w] ] },
+		               { color: 'red'		, angles: [ [-w-1, -w, 1],	[1-w, 1, w], [-1, w, w +  1], [-w,-1, w-1] ] },
+		               { color: 'blue'		, angles: [ [-w-1, -1, 1],	[-w, 1-w, w], [-1, 1, w +  1], [-w, w-1, w] ] },
+		               { color: 'orange'	, angles: [ [1-w , -1, 1],	[-w, w, w +  1], [-1, 1, w-1], [-w-1,- w, w] ] },
+		               { color: 'magenta'	, angles: [ [-w  , -1, 1],	[-w, 1, w], [-1, 1, w], [-w,- 1, w] ] }
+		             ];
+		var block = blocks[ Math. floor( Math. random() * blocks. length)]
+
+
+
 
 		var keys = {};
 		var cells = document.getElementsByTagName('td');
+
 
 		// キーボード入力を受け付ける
 		document.onkeydown = function(e) {
@@ -62,6 +83,9 @@ table td {
 				break;
 			case 38: //キーボードの上キー
 				keys.rotate = true;
+				break;
+			case 40:
+				keys.down = true;
 				break;
 			/**
 			default:
@@ -77,45 +101,91 @@ table td {
 
 			tick++;
 			leftBefore = left;
+			topBefore = top;
+			angleBefore = angle;
 
-			// 別イベント関数 onkeydownにて記録した情報を受け取る
-			if (keys.left && left > 0) {
-				left--;
-			}
-			if (keys.right && left + 4 < width) {
-				left++;
+			if (tick % speed ==0) {
+				top++;
+			} else {
+				if (keys.left) {
+					left--;
+				}
+				// 別イベント関数 onkeydownにて記録した情報を受け取る
+				if (keys.right) {
+					left++;
+				}
+				if (tick % speed == 0) {
+					top++;
+				}
+
+				if (keys.rotate) {
+					angle++
+				}
 			}
 
-			if (keys.rotate) {
-				angle++
-			}
+
 
 			keys = {}; // 初期化（次のイベントで拾えるようにする）
+
+			// 当たり判定処理
+			var parts = block.angles[angle % block.angles.length];
+			for ( var i = -1; i < parts.length; i++) {
+				var offset = parts[i] || 0;
+				if (fills[top * width + left + offset]) {
+
+					if (tick % speed ==0) {
+						for( var j = -1; j < partsBefore. length; j++   ) {
+							var offset = partsBefore[j] || 0;
+							fills[ topBefore * width +  leftBefore + offset] = block.color ;
+						}
+						//　次のblockを出現させ、上から落とす
+						block = blocks[Math.floor(Math.random() * blocks.length)];
+						leftBefore = left = Math.floor( width / 2);
+						topBefore = top = 2;
+						angleBefore = angle = 0;
+						partsBefore = parts = block.angles[ angle % block.angles.length];
+					} else {
+						//次のイベントタイミングまで保留
+						left = leftBefore;
+						top = topBefore;
+						angle = angleBefore;
+						parts = partsBefore
+					}
+
+
+
+					break;  //　どこか１か所でもfills内にある＝あたり判定対象
+				}
+			}
+
+
+
 
 			for ( var i = -1; i < partsBefore.length; i++) {
 				var offset = partsBefore[i] || 0;
 				cells[topBefore * width + leftBefore + offset].style.backgroundColor = '';
 			}
-			partsBefore = angles[angle % angles.length];
+			partsBefore = parts;
 
 			for ( var i = -1; i < partsBefore.length; i++) {
 				var offset = partsBefore[i] || 0;
-				cells[top * width + left + offset].style.backgroundColor = 'red';
+				cells[top * width + left + offset].style.backgroundColor = block.color;
 			}
 
-			topBefore = top;
 
 			// move関数の実行と、１マス下に動く挙動を分離する
-			if (tick % speed == 0) {
-				top++;
-			}
+//			if (tick % speed == 0) {
+//				top++;
+//			}
 
 			var info = 'プログラム内の経過：' + tick + '(' + left + ',' + top + ')';
 			document.getElementById('info').innerHTML = info;
 
-			if (top < height) {
-				setTimeout(move, moveSpeed / speed);
-			}
+
+			setTimeout(move, moveSpeed / speed);
+//			if (top < height) {
+//				setTimeout(move, moveSpeed / speed);
+//			}
 		}
 
 		document.getElementById('view').innerHTML = table.join('');
