@@ -32,9 +32,9 @@ table td {
 			table.push('<tr>');
 
 			for ( var x = 0; x < width; x++) {
-				if (x==0 || x == width -1 || y==height -1) {
+				if (x == 0 || x == width - 1 || y == height - 1) {
 					table.push('<td style="background-color:silver"></td>');
-					fills[x+y * width] = 'silver';
+					fills[x + y * width] = 'silver';
 				} else {
 					table.push('<td></td>');
 				}
@@ -53,24 +53,47 @@ table td {
 		var angle = 0;
 		var angleBefore = angle;
 		var partsBefore = [];
+		var score = 0;
 
-
-		var blocks = [ { color: 'cyan'		, angles: [ [-1  ,  1, 2], [-w, w, w +  w], [-2,-1, 1], [-w-w,-w, w] ] },
-		               { color: 'yellow'	, angles: [ [-w-1, -w,-1]                                            ] },
-		               { color: 'green'		, angles: [ [-w  ,1-w,-1],	[-w, 1, w + 1], [1, w-1, w], [-w-1,-1, w] ] },
-		               { color: 'red'		, angles: [ [-w-1, -w, 1],	[1-w, 1, w], [-1, w, w +  1], [-w,-1, w-1] ] },
-		               { color: 'blue'		, angles: [ [-w-1, -1, 1],	[-w, 1-w, w], [-1, 1, w +  1], [-w, w-1, w] ] },
-		               { color: 'orange'	, angles: [ [1-w , -1, 1],	[-w, w, w +  1], [-1, 1, w-1], [-w-1,- w, w] ] },
-		               { color: 'magenta'	, angles: [ [-w  , -1, 1],	[-w, 1, w], [-1, 1, w], [-w,- 1, w] ] }
-		             ];
-		var block = blocks[ Math. floor( Math. random() * blocks. length)]
-
-
-
+		var blocks = [
+				{
+					color : 'cyan',
+					angles : [ [ -1, 1, 2 ], [ -w, w, w + w ], [ -2, -1, 1 ],
+							[ -w - w, -w, w ] ]
+				},
+				{
+					color : 'yellow',
+					angles : [ [ -w - 1, -w, -1 ] ]
+				},
+				{
+					color : 'green',
+					angles : [ [ -w, 1 - w, -1 ], [ -w, 1, w + 1 ],
+							[ 1, w - 1, w ], [ -w - 1, -1, w ] ]
+				},
+				{
+					color : 'red',
+					angles : [ [ -w - 1, -w, 1 ], [ 1 - w, 1, w ],
+							[ -1, w, w + 1 ], [ -w, -1, w - 1 ] ]
+				},
+				{
+					color : 'blue',
+					angles : [ [ -w - 1, -1, 1 ], [ -w, 1 - w, w ],
+							[ -1, 1, w + 1 ], [ -w, w - 1, w ] ]
+				},
+				{
+					color : 'orange',
+					angles : [ [ 1 - w, -1, 1 ], [ -w, w, w + 1 ],
+							[ -1, 1, w - 1 ], [ -w - 1, -w, w ] ]
+				},
+				{
+					color : 'magenta',
+					angles : [ [ -w, -1, 1 ], [ -w, 1, w ], [ -1, 1, w ],
+							[ -w, -1, w ] ]
+				} ];
+		var block = blocks[Math.floor(Math.random() * blocks.length)]
 
 		var keys = {};
 		var cells = document.getElementsByTagName('td');
-
 
 		// キーボード入力を受け付ける
 		document.onkeydown = function(e) {
@@ -104,7 +127,7 @@ table td {
 			topBefore = top;
 			angleBefore = angle;
 
-			if (tick % speed ==0) {
+			if (tick % speed == 0) {
 				top++;
 			} else {
 				if (keys.left) {
@@ -123,8 +146,6 @@ table td {
 				}
 			}
 
-
-
 			keys = {}; // 初期化（次のイベントで拾えるようにする）
 
 			// 当たり判定処理
@@ -133,17 +154,60 @@ table td {
 				var offset = parts[i] || 0;
 				if (fills[top * width + left + offset]) {
 
-					if (tick % speed ==0) {
-						for( var j = -1; j < partsBefore. length; j++   ) {
+					if (tick % speed == 0) {
+						for ( var j = -1; j < partsBefore.length; j++) {
 							var offset = partsBefore[j] || 0;
-							fills[ topBefore * width +  leftBefore + offset] = block.color ;
+							fills[topBefore * width + leftBefore + offset] = block.color;
 						}
+
+
+						// 削除系処理
+						var cleans = 0;
+						for (var y = height -2; y>=0;y--) {
+							var filled = true;
+							for (var x = 1; x<width -1; x++) {
+								if (!fills[y*width + x]) {
+									filled = false;
+									break;
+								}
+							}
+							if (filled) {
+								for (var y2 = y; y2>=0; y2--) {
+									for(var x = 1; x < width -1; x++) {
+										fills[y2 * width + x] = fills[(y2-1) * width + x];
+									}
+
+								}
+								y++;
+								cleans++;
+
+							}
+
+						}
+						if (cleans > 0) {
+							score += Math.pow(10, cleans) * 10;
+							for (var y = height -2; y>=0;y--) {
+								for (var x=1; x< width -1; x++) {
+									var color = fills[y * width + x] || '';
+									cells[y * width + x].style.backgroundColor = color;
+								}
+
+
+							}
+
+						}
+
+
+
+
 						//　次のblockを出現させ、上から落とす
-						block = blocks[Math.floor(Math.random() * blocks.length)];
-						leftBefore = left = Math.floor( width / 2);
+						block = blocks[Math
+								.floor(Math.random() * blocks.length)];
+						leftBefore = left = Math.floor(width / 2);
 						topBefore = top = 2;
 						angleBefore = angle = 0;
-						partsBefore = parts = block.angles[ angle % block.angles.length];
+						partsBefore = parts = block.angles[angle
+								% block.angles.length];
 					} else {
 						//次のイベントタイミングまで保留
 						left = leftBefore;
@@ -152,14 +216,13 @@ table td {
 						parts = partsBefore
 					}
 
-
-
-					break;  //　どこか１か所でもfills内にある＝あたり判定対象
+					break; //　どこか１か所でもfills内にある＝あたり判定対象
 				}
 			}
 
-
-
+			if (top != topBefore) {
+				score++;
+			}
 
 			for ( var i = -1; i < partsBefore.length; i++) {
 				var offset = partsBefore[i] || 0;
@@ -172,20 +235,10 @@ table td {
 				cells[top * width + left + offset].style.backgroundColor = block.color;
 			}
 
-
-			// move関数の実行と、１マス下に動く挙動を分離する
-//			if (tick % speed == 0) {
-//				top++;
-//			}
-
-			var info = 'プログラム内の経過：' + tick + '(' + left + ',' + top + ')';
+			var info = 'プログラム内の経過：' + tick + '(' + left + ',' + top + ' score: ' + score + ')';
 			document.getElementById('info').innerHTML = info;
 
-
 			setTimeout(move, moveSpeed / speed);
-//			if (top < height) {
-//				setTimeout(move, moveSpeed / speed);
-//			}
 		}
 
 		document.getElementById('view').innerHTML = table.join('');
