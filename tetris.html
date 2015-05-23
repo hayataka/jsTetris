@@ -54,6 +54,7 @@ table td {
 		var angleBefore = angle;
 		var partsBefore = [];
 		var score = 0;
+		var scoreBefore = score;
 
 		var blocks = [
 				{
@@ -137,9 +138,16 @@ table td {
 				if (keys.right) {
 					left++;
 				}
+
+				if (keys.down) {
+					top++;
+				}
+
 				if (tick % speed == 0) {
 					top++;
 				}
+
+
 
 				if (keys.rotate) {
 					angle++
@@ -159,6 +167,17 @@ table td {
 							var offset = partsBefore[j] || 0;
 							fills[topBefore * width + leftBefore + offset] = block.color;
 						}
+
+
+						if (scoreBefore == score) {
+							for(var i in fills) {
+								if (fills[i]) {
+									cells[i].style.backgroundColor = 'black';
+								}
+							}
+							return;
+						}
+
 
 
 						// 削除系処理
@@ -206,14 +225,15 @@ table td {
 						leftBefore = left = Math.floor(width / 2);
 						topBefore = top = 2;
 						angleBefore = angle = 0;
-						partsBefore = parts = block.angles[angle
-								% block.angles.length];
+						partsBefore = parts = block.angles[angle % block.angles.length];
+						scoreBefore = score;
 					} else {
 						//次のイベントタイミングまで保留
 						left = leftBefore;
 						top = topBefore;
 						angle = angleBefore;
-						parts = partsBefore
+						parts = partsBefore;
+
 					}
 
 					break; //　どこか１か所でもfills内にある＝あたり判定対象
